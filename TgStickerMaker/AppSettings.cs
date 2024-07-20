@@ -2,10 +2,14 @@
 {
     public class AppSettings
     {
+        public string BaseDirectory { get; set; }
+
         public string LogFilePath { get; set; }
 
         public string OutputDirectory { get; set; }
 
         public string MediaDownloadDirectory { get; set; }
+
+        public string? TempFiltes { get; set; }
     }
 }
