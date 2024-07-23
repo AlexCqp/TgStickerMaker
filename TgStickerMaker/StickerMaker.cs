@@ -41,7 +41,7 @@ namespace TgStickerMaker
                 Directory.CreateDirectory(videosPath);
             }
 
-            string ffmpegPath = Path.Combine(AppContext.BaseDirectory, "ffmpeg.exe");
+            string ffmpegPath = Path.Combine(AppContext.BaseDirectory, "ffmpeg");
             FFmpeg.SetExecutablesPath(Path.GetDirectoryName(ffmpegPath));
             
             var outputFilePath = WriteFilesHelper.GetUniqueFileName(Path.Combine(videosPath, "output.webm"));
@@ -84,7 +84,7 @@ namespace TgStickerMaker
                 Directory.CreateDirectory(videosPath);
             }
 
-            string ffmpegPath = Path.Combine(AppContext.BaseDirectory, "ffmpeg.exe");
+            string ffmpegPath = Path.Combine(AppContext.BaseDirectory, "ffmpeg");
             FFmpeg.SetExecutablesPath(Path.GetDirectoryName(ffmpegPath));
 
             var outputFilePath = WriteFilesHelper.GetUniqueFileName(Path.Combine(videosPath, "output.webm"));
