@@ -53,11 +53,11 @@ async Task Main()
             string outputFilePath;
             if (StickerMaker.IsImage(filePath))
             {
-                outputFilePath = await StickerMaker.ProcessImage(filePath, topText, bottomText);
+                outputFilePath = await StickerMaker.ProcessImage(filePath, topText, bottomText, Settings.OutputDirectory);
             }
             else
             {
-                outputFilePath = await StickerMaker.ProcessVideo(filePath, topText, bottomText, duration);
+                outputFilePath = await StickerMaker.ProcessVideo(filePath, topText, bottomText, duration, Settings.OutputDirectory);
             }
 
             Console.WriteLine($"Файл сохранён как {outputFilePath}");
@@ -75,4 +75,3 @@ async Task Main()
         }
     }
 }
-

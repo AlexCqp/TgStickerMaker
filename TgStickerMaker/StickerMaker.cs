@@ -15,9 +15,9 @@ namespace TgStickerMaker
     {
         const double DefaultDuration = 3;
 
-        public static async Task<string> ProcessImage(string filePath, string topText, string bottomText)
+        public static async Task<string> ProcessImage(string filePath, string topText, string bottomText, string outputDirectory)
         {
-            var imagesPath = Path.Combine(Settings.OutputDirectory, "images");
+            var imagesPath = Path.Combine(outputDirectory, "images");
             if (!Path.Exists(imagesPath))
             {
                 Directory.CreateDirectory(imagesPath);
@@ -30,12 +30,12 @@ namespace TgStickerMaker
             return outputFilePath;
         }
 
-        public static async Task<string> ProcessVideo(string filePath, string topText, string bottomText, double duration)
+        public static async Task<string> ProcessVideo(string filePath, string topText, string bottomText, double duration, string outputDirectory)
         {
             var sourceVideoDuration = GetVideoDuration(filePath);
             var speedUpKoaf = duration == 0 && sourceVideoDuration > 3 ? (DefaultDuration - 0.5) / sourceVideoDuration : 1;
             duration = duration == 0 ? DefaultDuration : duration;
-            var videosPath = Path.Combine(Settings.OutputDirectory, "videos");
+            var videosPath = Path.Combine(outputDirectory, "videos");
             if (!Path.Exists(videosPath))
             {
                 Directory.CreateDirectory(videosPath);
@@ -72,6 +72,45 @@ namespace TgStickerMaker
 
             return outputFilePath;
         }
+
+        public static async Task<string> ProcessVideo(string filePath, TextOverlay[] textOverlays, double duration)
+        {
+            var sourceVideoDuration = GetVideoDuration(filePath);
+            var speedUpKoaf = sourceVideoDuration > 3 ? (DefaultDuration - 0.5) / sourceVideoDuration : 1;
+            duration = duration == 0 ? DefaultDuration : duration;
+            var videosPath = Path.Combine(ServiceConfiguration.Settings.OutputDirectory, "videos");
+            if (!Directory.Exists(videosPath))
+            {
+                Directory.CreateDirectory(videosPath);
+            }
+
+            string ffmpegPath = Path.Combine(AppContext.BaseDirectory, "ffmpeg.exe");
+            FFmpeg.SetExecutablesPath(Path.GetDirectoryName(ffmpegPath));
+
+            var outputFilePath = WriteFilesHelper.GetUniqueFileName(Path.Combine(videosPath, "output.webm"));
+            string fontPath = @"/Windows/Fonts/impact.ttf";
+
+            var textFilter = "";
+
+            foreach (var overlay in textOverlays)
+            {
+                textFilter += $"drawtext=fontfile='{fontPath}':text='{overlay.Text}':x={overlay.X.ToString().Replace(",",".")}:y={overlay.Y.ToString().Replace(",", ".")}:fontsize={overlay.FontSize}:fontcolor=white:borderw=1:bordercolor=black,";
+            }
+
+            if (textFilter.EndsWith(","))
+            {
+                textFilter = textFilter.Substring(0, textFilter.Length - 1); // Remove trailing comma
+            }
+
+            var filterGraph = $"{textFilter},scale=512:512,setsar=1,setpts={speedUpKoaf.ToString().Replace(",", ".")}*PTS";
+            var conversion = FFmpeg.Conversions.New()
+                .AddParameter($"-i \"{filePath}\" -vf \"{filterGraph}\" -vcodec libvpx-vp9 -b:v 250k -r 30 {(speedUpKoaf != 1 ? "" : $"-t {duration}")} \"{outputFilePath}\"");
+
+            await conversion.Start();
+
+            return outputFilePath;
+        }
+
 
         public static bool IsImage(string filePath)
         {
