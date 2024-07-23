@@ -144,29 +144,29 @@ namespace TgStickerMakerUi
                 var globW = (OverlayCanvas.ActualWidth - MediaElement.ActualWidth) / 2;
                 var globH = (OverlayCanvas.ActualHeight - MediaElement.ActualHeight) / 2;
                 Logs.Text = $"{e.GetPosition(_selectedTextBlock).Y}";
+                var textOverlay = (TextOverlay)_selectedTextBlock.DataContext;
                 // Корректировка координат с учетом границ MediaElement
-                //if (position.X < 0)
-                //{
-                //    position.X = 0;
-                //}
-                //if (position.X > OverlayCanvas.ActualWidth - _selectedTextBlock.ActualWidth)
-                //{
-                //    position.X = OverlayCanvas.ActualWidth - _selectedTextBlock.ActualWidth;
-                //}
-                //if (position.Y < 0)
-                //{
-                //    position.Y = 0;
-                //}
-                //if (position.Y > OverlayCanvas.ActualHeight - _selectedTextBlock.ActualHeight)
-                //{
-                //    position.Y = OverlayCanvas.ActualHeight - _selectedTextBlock.ActualHeight;
-                //}
+                if (position.X < 0)
+                {
+                    position.X = 0;
+                }
+                if (position.X > OverlayCanvas.ActualWidth - _selectedTextBlock.ActualWidth)
+                {
+                    position.X = OverlayCanvas.ActualWidth - _selectedTextBlock.ActualWidth;
+                }
+                if (position.Y < 0)
+                {
+                    position.Y = 0;
+                }
+                if (position.Y > OverlayCanvas.ActualHeight - _selectedTextBlock.ActualHeight)
+                {
+                    position.Y = OverlayCanvas.ActualHeight - _selectedTextBlock.ActualHeight;
+                }
 
                 double x = position.X;// Math.Max(_mediaElementBounds.Left, Math.Min(_mediaElementBounds.Right - _selectedTextBlock.ActualWidth, position.X));
                 double y = position.Y;// Math.Max(_mediaElementBounds.Top, Math.Min(_mediaElementBounds.Bottom - _selectedTextBlock.ActualHeight, position.Y));
 
                 // Обновляем координаты TextOverlay
-                var textOverlay = (TextOverlay)_selectedTextBlock.DataContext;
                 textOverlay.X = x;
                 textOverlay.Y = y;
                 _startPoint = position;

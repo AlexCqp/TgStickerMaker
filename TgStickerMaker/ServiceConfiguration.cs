@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using System.Dynamic;
 using System.Reflection;
+using TgStickerMaker.Settings;
 
 namespace TgStickerMaker
 {

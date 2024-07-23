@@ -20,13 +20,13 @@ namespace TgStickerMaker.Logger
 
             if (IsLogInFile())
             {
-                if (!File.Exists(Settings.LogFilePath))
+                if (!File.Exists(ServiceConfiguration.Settings.LogFilePath))
                 {
-                    Console.WriteLine($"Пути для файла лога {Path.Combine(AppContext.BaseDirectory, Settings.LogFilePath)} не существует. Лог будет выводиться в консоль");
+                    Console.WriteLine($"Пути для файла лога {Path.Combine(AppContext.BaseDirectory, ServiceConfiguration.Settings.LogFilePath)} не существует. Лог будет выводиться в консоль");
                 }
                 else
                 {
-                    using (var tsw = new StreamWriter(Settings.LogFilePath, true))
+                    using (var tsw = new StreamWriter(ServiceConfiguration.Settings.LogFilePath, true))
                     {
                         tsw.Write(log.ToString());
                         return;
@@ -58,6 +58,6 @@ namespace TgStickerMaker.Logger
         }
 
         private static bool IsLogInFile()
-            => !string.IsNullOrEmpty(Settings.LogFilePath);
+            => !string.IsNullOrEmpty(ServiceConfiguration.Settings.LogFilePath);
     }
 }

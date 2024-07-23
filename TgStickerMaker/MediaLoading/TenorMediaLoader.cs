@@ -42,7 +42,7 @@ namespace TgStickerMaker.MediaLoading
                                 Uri gifUri = new Uri(baseUri, gifUrl);
 
                                 // Скачиваем гифку
-                                var gifFilePath = Settings.MediaDownloadDirectory;
+                                var gifFilePath = ServiceConfiguration.Settings.MediaDownloadDirectory;
                                 if(!Uri.TryCreate(gifUrl, UriKind.RelativeOrAbsolute, out var res))
                                 {
                                     gifFilePath = WriteFilesHelper.GetUniqueFileName(Path.Combine(gifFilePath, "input.gif"));

@@ -15,9 +15,9 @@ namespace TgStickerMaker
     {
         const double DefaultDuration = 3;
 
-        public static async Task<string> ProcessImage(string filePath, string topText, string bottomText)
+        public static async Task<string> ProcessImage(string filePath, string topText, string bottomText, string outputDirectory)
         {
-            var imagesPath = Path.Combine(Settings.OutputDirectory, "images");
+            var imagesPath = Path.Combine(outputDirectory, "images");
             if (!Path.Exists(imagesPath))
             {
                 Directory.CreateDirectory(imagesPath);
@@ -30,12 +30,12 @@ namespace TgStickerMaker
             return outputFilePath;
         }
 
-        public static async Task<string> ProcessVideo(string filePath, string topText, string bottomText, double duration)
+        public static async Task<string> ProcessVideo(string filePath, string topText, string bottomText, double duration, string outputDirectory)
         {
             var sourceVideoDuration = GetVideoDuration(filePath);
             var speedUpKoaf = duration == 0 && sourceVideoDuration > 3 ? (DefaultDuration - 0.5) / sourceVideoDuration : 1;
             duration = duration == 0 ? DefaultDuration : duration;
-            var videosPath = Path.Combine(Settings.OutputDirectory, "videos");
+            var videosPath = Path.Combine(outputDirectory, "videos");
             if (!Path.Exists(videosPath))
             {
                 Directory.CreateDirectory(videosPath);
@@ -78,7 +78,7 @@ namespace TgStickerMaker
             var sourceVideoDuration = GetVideoDuration(filePath);
             var speedUpKoaf = sourceVideoDuration > 3 ? (DefaultDuration - 0.5) / sourceVideoDuration : 1;
             duration = duration == 0 ? DefaultDuration : duration;
-            var videosPath = Path.Combine(Settings.OutputDirectory, "videos");
+            var videosPath = Path.Combine(ServiceConfiguration.Settings.OutputDirectory, "videos");
             if (!Directory.Exists(videosPath))
             {
                 Directory.CreateDirectory(videosPath);
