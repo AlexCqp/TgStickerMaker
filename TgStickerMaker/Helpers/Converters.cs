@@ -6,7 +6,7 @@ namespace TgStickerMaker.Helpers
     {
         public static void ConvertGifToMp4(string gifFilePath, string mp4FilePath)
         {
-            var ffmpegPath = Path.Combine(AppContext.BaseDirectory, "ffmpeg.exe"); // Предполагается, что FFmpeg добавлен в PATH
+            var ffmpegPath = Path.Combine(AppContext.BaseDirectory, "ffmpeg"); // Предполагается, что FFmpeg добавлен в PATH
             var arguments = $"-i \"{gifFilePath}\" -movflags faststart -pix_fmt yuv420p -vf \"scale=trunc(iw/2)*2:trunc(ih/2)*2\" \"{mp4FilePath}\"";
 
             var process = new Process
