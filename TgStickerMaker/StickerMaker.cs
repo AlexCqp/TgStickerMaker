@@ -1,4 +1,12 @@
-﻿using TgStickerMaker.Helpers;
+﻿using SixLabors.Fonts;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Drawing.Processing;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+using TgStickerMaker.Helpers;
+using Xabe.FFmpeg;
 
 namespace TgStickerMaker
 {
