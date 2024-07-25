@@ -253,6 +253,11 @@ namespace TgStickerMakerBot.Services
 
             try
             {
+                if (!Directory.Exists(Settings.OutputDirectory))
+                {
+                    Directory.CreateDirectory(Settings.OutputDirectory);
+                }
+
                 if (StickerMaker.IsImage(filePath))
                 {
                     outputFilePath = await StickerMaker.ProcessImage(filePath, _topText, _bottomText, Settings.BotSettings.OutputDirectory);
