@@ -1,13 +1,4 @@
-﻿using SixLabors.Fonts;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp;
-using Xabe.FFmpeg;
-using SixLabors.ImageSharp.Processing;
-using SixLabors.ImageSharp.Drawing.Processing;
-using static TgStickerMaker.ServiceConfiguration;
-using TgStickerMaker.Helpers;
-using System.Diagnostics;
-using System.Text.RegularExpressions;
+﻿using TgStickerMaker.Helpers;
 
 namespace TgStickerMaker
 {
@@ -45,7 +36,7 @@ namespace TgStickerMaker
             FFmpeg.SetExecutablesPath(Path.GetDirectoryName(ffmpegPath));
             
             var outputFilePath = WriteFilesHelper.GetUniqueFileName(Path.Combine(videosPath, "output.webm"));
-            string fontPath = @"/Windows/Fonts/impact.ttf";
+            string fontPath = ServiceConfiguration.Settings.PathToFont;
 
             var textFilter = "";
 

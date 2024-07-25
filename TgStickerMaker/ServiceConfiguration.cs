@@ -26,6 +26,11 @@ namespace TgStickerMaker
             {
                 Directory.CreateDirectory(Settings.TempFiltes);
             }
+
+            if (!Path.Exists(Settings.PathToFont))
+            {
+                Directory.CreateDirectory(Settings.PathToFont);
+            }
         }
 
         private static void InitializeSettingsPaths()

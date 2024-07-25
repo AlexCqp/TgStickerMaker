@@ -14,6 +14,8 @@
 
         public string UpscalerAppPath { get; set; }
 
+        public string PathToFont { get; set; }
+
         public BotSettings BotSettings { get; set; }
     }
 }
