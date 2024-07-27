@@ -3,12 +3,14 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Dynamic;
 using System.Reflection;
 using TgStickerMaker.Settings;
+using Microsoft.Extensions.Configuration;
 
 namespace TgStickerMaker
 {
     public static class ServiceConfiguration
     {
         public static AppSettings Settings;
+        private const string _botTokenPath = "bot_token";
 
         public static void ConfigureServices()
         {
@@ -17,9 +19,15 @@ namespace TgStickerMaker
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()  // Переменные среды добавляются после файла конфигурации
                 .Build();
 
             Settings = configuration.GetSection("AppSettings").Get<AppSettings>();
+            var botTokenPath =Path.Combine(Settings.SecretsPath, _botTokenPath);
+            Settings.BotSettings.BotToken = File.ReadAllText(botTokenPath);
+            Console.WriteLine($"{botTokenPath}: {Settings.BotSettings.BotToken}");
+            Console.WriteLine(Settings.FFmpegPath);
+
             InitializeSettingsPaths();
 
             if (!Path.Exists(Settings.TempFiltes))

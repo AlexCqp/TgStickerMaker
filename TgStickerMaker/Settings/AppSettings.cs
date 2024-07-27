@@ -16,6 +16,10 @@
 
         public string PathToFont { get; set; }
 
+        public string FFmpegPath { get; set; }
+
+        public string SecretsPath { get; set; }
+
         public BotSettings BotSettings { get; set; }
     }
 }

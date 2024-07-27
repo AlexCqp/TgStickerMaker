@@ -7,7 +7,14 @@ services:
       context: .
       dockerfile: TgStickerMakerBot/Dockerfile
     environment:
-      - AppSettings__FFmpegPath=ffmpeg
-      - AppSettings__BotSettings__BotToken=7497308682:AAGTrY7Za9NDQTZbUYW166iwQFAClYgyjCs
+      - APPSETTINGS__FFMPEGPATH=${FFmpegPath}
+      - APPSETTINGS__SECRETSPATH=${SecretsPath}
+    secrets:
+     - bot_token
+    env_file:
+      - .env
     ports:
       - "5144:8080"
+secrets:
+  bot_token:
+    file: ./bot_token.txt
