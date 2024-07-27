@@ -84,7 +84,8 @@ namespace TgStickerMaker
             }
 
             string ffmpegPath = ServiceConfiguration.Settings.FFmpegPath;
-            FFmpeg.SetExecutablesPath(Path.GetDirectoryName(ffmpegPath));
+            Console.WriteLine(ffmpegPath);
+            FFmpeg.SetExecutablesPath(ffmpegPath);
 
             var outputFilePath = WriteFilesHelper.GetUniqueFileName(Path.Combine(videosPath, "output.webm"));
             string fontPath = @"/Windows/Fonts/impact.ttf";
