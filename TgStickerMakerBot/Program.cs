@@ -9,6 +9,7 @@ async Task Main()
     try
     {
         ConfigureServices();
+        Console.Write($"ssSSdefkewjgklwe {Settings.BotSettings.BotToken}");
         var botService = new BotService(Settings.BotSettings.BotToken);
 
         var cts = new CancellationTokenSource();
