@@ -40,8 +40,7 @@ namespace TgStickerMaker
                 Directory.CreateDirectory(videosPath);
             }
 
-            string ffmpegPath = Path.Combine(AppContext.BaseDirectory, "ffmpeg.exe");
-            FFmpeg.SetExecutablesPath(Path.GetDirectoryName(ffmpegPath));
+            FFmpeg.SetExecutablesPath(ServiceConfiguration.Settings.FFmpegPath);
             
             var outputFilePath = WriteFilesHelper.GetUniqueFileName(Path.Combine(videosPath, "output.webm"));
             string fontPath = ServiceConfiguration.Settings.PathToFont;
