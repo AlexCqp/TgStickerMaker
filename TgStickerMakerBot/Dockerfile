@@ -23,6 +23,11 @@ RUN dotnet publish "TgStickerMakerBot.csproj" -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 
+# Установка ffmpeg в базовом образе
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
 # Копируем опубликованные файлы
 COPY --from=publish /app/publish .
 
