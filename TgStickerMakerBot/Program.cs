@@ -6,13 +6,28 @@ await Main();
 
 async Task Main()
 {
-    ConfigureServices();
-    var botService = new BotService(Settings.BotSettings.BotToken);
+    try
+    {
+        ConfigureServices();
+        var botService = new BotService(Settings.BotSettings.BotToken);
 
-    var cts = new CancellationTokenSource();
-    await botService.StartAsync(cts.Token);
+        var cts = new CancellationTokenSource();
 
-    Console.WriteLine("Press any key to exit");
-    Console.ReadKey();
-    cts.Cancel();
+        // Setup a task to listen for termination signals (e.g., SIGTERM)
+        AppDomain.CurrentDomain.ProcessExit += (s, e) => cts.Cancel();
+        Console.CancelKeyPress += (s, e) =>
+        {
+            e.Cancel = true; // Prevent the process from terminating.
+            cts.Cancel();
+        };
+
+        await botService.StartAsync(cts.Token);
+
+        // Wait until the cancellation token is triggered
+        await Task.Delay(Timeout.Infinite, cts.Token);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex.Message);
+    }
 }

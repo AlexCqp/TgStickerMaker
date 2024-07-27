@@ -1,0 +1,13 @@
+version: '3.4'
+
+services:
+  myapp:
+    image: tg-sticker-maker-bot:latest
+    build:
+      context: .
+      dockerfile: TgStickerMakerBot/Dockerfile
+    environment:
+      - AppSettings_FFmpegPath=ffmpeg
+      - AppSettings_BotSettings_BotToken=7497308682:AAGTrY7Za9NDQTZbUYW166iwQFAClYgyjCs
+    ports:
+      - "5144:8080"

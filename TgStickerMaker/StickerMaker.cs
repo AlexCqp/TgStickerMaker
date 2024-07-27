@@ -60,13 +60,13 @@ namespace TgStickerMaker
 
             if (textFilter.EndsWith(","))
             {
-                textFilter = textFilter.Substring(0, textFilter.Length - 1); // Remove trailing comma
+                textFilter = textFilter.Substring(0, textFilter.Length - 1); // Убираем последнюю запятую
             }
 
             var filterGraph = $"{textFilter},scale=512:512,setsar=1,setpts={speedUpKoaf.ToString().Replace(",", ".")}*PTS";
             var conversion = FFmpeg.Conversions.New()
                 .AddParameter($"-i \"{filePath}\" -vf \"{filterGraph}\" -vcodec libvpx-vp9 -b:v 250k -r 30 {(speedUpKoaf != 1 ? "" : $"-t {duration}")} \"{outputFilePath}\"");
-                
+
             await conversion.Start();
 
             return outputFilePath;

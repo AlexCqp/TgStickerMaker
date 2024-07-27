@@ -28,7 +28,7 @@ namespace TgStickerMakerBot.Services
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             var me = await _botClient.GetMeAsync();
-            Console.WriteLine($"Hello, World! I am user {me.Id} and my name is {me.FirstName}.");
+            Console.WriteLine($"Бот {me.FirstName} запущен. Нажмите Ctrl+C для завершения работы");
 
             _botClient.StartReceiving(
                 updateHandler: HandleUpdateAsync,
@@ -39,6 +39,11 @@ namespace TgStickerMakerBot.Services
                 },
                 cancellationToken: cancellationToken
             );
+
+            // Just wait until cancellation token is triggered
+            await Task.Delay(Timeout.Infinite, cancellationToken);
+
+            Console.WriteLine("Бот остановлен");
         }
 
         private async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)

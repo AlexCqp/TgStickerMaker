@@ -1,6 +1,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS c
 WORKDIR /app
 
+RUN sudo apt install ffmpeg
+
 COPY TgStickerMakerBot/TgStickerMakerBot.csproj" "./TgStickerMakerBot/
 COPY TgStickerMaker/TgStickerMaker.csproj" "./TgStickerMaker/
 
