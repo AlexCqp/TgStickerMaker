@@ -39,13 +39,19 @@
     <None Update="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="ffmpeg">
+    <None Update="bot_token">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="ffmpeg.exe">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="ffprobe.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Fonts\impact.ttf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="secrets\bot_token">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="video2x-4.8.1-win32-full\video2x.exe">
@@ -61,6 +67,7 @@
 
   <ItemGroup>
     <Folder Include="bin\Debug\net8.0\ffmpeg-full\tools\ffmpeg\bin\" />
+    <Folder Include="Fonts\" />
   </ItemGroup>
 
 </Project>
