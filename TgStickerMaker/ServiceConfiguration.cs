@@ -40,9 +40,9 @@ namespace TgStickerMaker
                 Directory.CreateDirectory(Settings.PathToFont);
             }
 
-            if (!Path.Exists(Settings.OutputDirectory))
+            if (!Path.Exists(Settings.BotSettings.OutputDirectory))
             {
-                Directory.CreateDirectory(Settings.OutputDirectory);
+                Directory.CreateDirectory(Settings.BotSettings.OutputDirectory);
             }
         }
 

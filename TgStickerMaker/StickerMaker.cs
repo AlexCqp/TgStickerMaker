@@ -4,6 +4,7 @@ using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Diagnostics;
+using System.ServiceProcess;
 using System.Text.RegularExpressions;
 using TgStickerMaker.Helpers;
 using Xabe.FFmpeg;
@@ -32,6 +33,7 @@ namespace TgStickerMaker
         public static async Task<string> ProcessVideo(string filePath, string topText, string bottomText, double duration, string outputDirectory)
         {
             var sourceVideoDuration = GetVideoDuration(filePath);
+            Console.WriteLine(sourceVideoDuration);
             var speedUpKoaf = duration == 0 && sourceVideoDuration > 3 ? (DefaultDuration - 0.5) / sourceVideoDuration : 1;
             duration = duration == 0 ? DefaultDuration : duration;
             var videosPath = Path.Combine(outputDirectory, "videos");
@@ -40,8 +42,7 @@ namespace TgStickerMaker
                 Directory.CreateDirectory(videosPath);
             }
 
-            FFmpeg.SetExecutablesPath(ServiceConfiguration.Settings.FFmpegPath);
-            
+            Console.WriteLine(Path.Combine(AppContext.BaseDirectory, ServiceConfiguration.Settings.FFmpegPath));
             var outputFilePath = WriteFilesHelper.GetUniqueFileName(Path.Combine(videosPath, "output.webm"));
             string fontPath = ServiceConfiguration.Settings.PathToFont;
 
@@ -63,10 +64,22 @@ namespace TgStickerMaker
             }
 
             var filterGraph = $"{textFilter},scale=512:512,setsar=1,setpts={speedUpKoaf.ToString().Replace(",", ".")}*PTS";
-            var conversion = FFmpeg.Conversions.New()
-                .AddParameter($"-i \"{filePath}\" -vf \"{filterGraph}\" -vcodec libvpx-vp9 -b:v 250k -r 30 {(speedUpKoaf != 1 ? "" : $"-t {duration}")} \"{outputFilePath}\"");
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = ServiceConfiguration.Settings.FFmpegPath,
+                    Arguments = $"-i \"{filePath}\" -vf \"{filterGraph}\" -vcodec libvpx-vp9 -b:v 250k -r 30 {(speedUpKoaf != 1 ? "" : $"-t {duration}")} \"{outputFilePath}\"",
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
 
-            await conversion.Start();
+            process.Start();
+            string output = process.StandardError.ReadToEnd();
+            await process.WaitForExitAsync();
+            Console.WriteLine($"{output}");
 
             return outputFilePath;
         }
@@ -102,10 +115,23 @@ namespace TgStickerMaker
             }
 
             var filterGraph = $"{textFilter},scale=512:512,setsar=1,setpts={speedUpKoaf.ToString().Replace(",", ".")}*PTS";
-            var conversion = FFmpeg.Conversions.New()
-                .AddParameter($"-i \"{filePath}\" -vf \"{filterGraph}\" -vcodec libvpx-vp9 -b:v 250k -r 30 {(speedUpKoaf != 1 ? "" : $"-t {duration}")} \"{outputFilePath}\"");
 
-            await conversion.Start();
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "ffmpeg",
+                    Arguments = $"-i \"{filePath}\" -vf \"{filterGraph}\" -vcodec libvpx-vp9 -b:v 250k -r 30 {(speedUpKoaf != 1 ? "" : $"-t {duration}")} \"{outputFilePath}\"",
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+
+            process.Start();
+            string output = process.StandardError.ReadToEnd();
+            await process.WaitForExitAsync();
+            Console.WriteLine($"{output}");
 
             return outputFilePath;
         }
