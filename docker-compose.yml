@@ -9,6 +9,7 @@ services:
     environment:
       - APPSETTINGS__FFMPEGPATH=${FFmpegPath}
       - APPSETTINGS__SECRETSPATH=${SecretsPath}
+      - APPSETTINGS__PATHTOFONT=${FontPath}
     secrets:
      - bot_token
     env_file:
