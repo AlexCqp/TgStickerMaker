@@ -50,12 +50,12 @@ namespace TgStickerMaker
 
             if (!string.IsNullOrEmpty(topText))
             {
-                textFilter += $"drawtext=fontfile='{fontPath}':text='{topText}':x=(w-text_w)/2:y=10:fontsize=40:fontcolor=white:borderw=1:bordercolor=black,";
+                textFilter += $"drawtext=fontfile='{fontPath}':text='{topText}':x=(w-text_w)/2:y=10:fontsize=40:fontcolor=white:borderw=1:bordercolor=black:maxsize=w-20,";
             }
 
             if (!string.IsNullOrEmpty(bottomText))
             {
-                textFilter += $"drawtext=fontfile='{fontPath}':text='{bottomText}':x=(w-text_w)/2:y=h-text_h-10:fontsize=40:fontcolor=white:borderw=1:bordercolor=black,";
+                textFilter += $"drawtext=fontfile='{fontPath}':text='{bottomText}':x=(w-text_w)/2:y=h-text_h-10:fontsize=40:fontcolor=white:borderw=1:bordercolor=black:maxsize=w-20,";
             }
 
             if (textFilter.EndsWith(","))
@@ -83,6 +83,7 @@ namespace TgStickerMaker
 
             return outputFilePath;
         }
+
 
         public static async Task<string> ProcessVideo(string filePath, TextOverlay[] textOverlays, double duration)
         {

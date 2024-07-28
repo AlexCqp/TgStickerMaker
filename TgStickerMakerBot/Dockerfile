@@ -4,6 +4,8 @@ WORKDIR /app
 # Установка необходимых шрифтов, Fontconfig и ffmpeg
 RUN apt-get update && apt-get install -y \
     ffmpeg \
+    libfreetype6 \
+    libfreetype6-dev \
     fontconfig \
     fonts-dejavu \
     && rm -rf /var/lib/apt/lists/*
