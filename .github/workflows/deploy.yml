@@ -21,8 +21,10 @@ jobs:
         docker-compose build
         docker-compose push
 
-      - name: Deploy to server
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "
+    - name: Deploy to server
+      env:
+        MY_SECRET: ${{ secrets.BOT_TOKEN }}
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "
             export BOT_TOKEN=${{ secrets.BOT_TOKEN }}
             docker-compose up -d
