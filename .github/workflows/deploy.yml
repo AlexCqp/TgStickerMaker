@@ -22,7 +22,8 @@ jobs:
         ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} '
             export BOT_TOKEN=${{ secrets.BOT_TOKEN }}
             cd TgStickerMaker/
-            git pull origin main
+            git fetch
+            git pull
             docker-compose build
-            docker-compose up --build -d
+            docker-compose up -d
         '
