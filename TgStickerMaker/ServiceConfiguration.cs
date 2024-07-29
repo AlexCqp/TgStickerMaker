@@ -23,9 +23,7 @@ namespace TgStickerMaker
                 .Build();
 
             Settings = configuration.GetSection("AppSettings").Get<AppSettings>();
-            var botTokenPath =Path.Combine(Settings.SecretsPath, _botTokenPath);
-            Settings.BotSettings.BotToken = File.ReadAllText(botTokenPath).Trim();
-            Console.WriteLine($"{botTokenPath}: {Settings.BotSettings.BotToken}");
+            Console.WriteLine($"{Settings.BotSettings.BotToken}");
             Console.WriteLine(Settings.FFmpegPath);
 
             InitializeSettingsPaths();

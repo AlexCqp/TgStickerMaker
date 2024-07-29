@@ -10,12 +10,8 @@ services:
       - APPSETTINGS__FFMPEGPATH=${FFmpegPath}
       - APPSETTINGS__SECRETSPATH=${SecretsPath}
       - APPSETTINGS__PATHTOFONT=${FontPath}
-    secrets:
-     - bot_token
+      - APPSETTINGS__BOTSETTINGS__BOTTOKEN=${BOT_TOKEN}
     env_file:
       - .env
     ports:
       - "5144:8080"
-secrets:
-  bot_token:
-    file: ./bot_token.txt

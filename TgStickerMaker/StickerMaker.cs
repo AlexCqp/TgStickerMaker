@@ -49,6 +49,7 @@ namespace TgStickerMaker
 
             Console.WriteLine(Path.Combine(AppContext.BaseDirectory, ServiceConfiguration.Settings.FFmpegPath));
             var outputFilePath = WriteFilesHelper.GetUniqueFileName(Path.Combine(videosPath, "output.webm"));
+            Console.WriteLine(ServiceConfiguration.Settings.PathToFont);
             string fontPath = ServiceConfiguration.Settings.PathToFont;
              /*Convert.ToInt32(Convert.ToDouble((Math.Sqrt((size.Width * size.Width + size.Height * size.Height))) / 2203 * 100));*/
             var textFilter = "";
