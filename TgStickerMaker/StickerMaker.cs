@@ -146,7 +146,7 @@ namespace TgStickerMaker
 
         private static int GetFontSize(string text, double videoW)
         {
-            return Convert.ToInt32(videoW / text.Count() * (40d / 12d));
+            return Convert.ToInt32(videoW / text.Count() * (40d / 18d));
         }
 
         public static bool IsImage(string filePath)
