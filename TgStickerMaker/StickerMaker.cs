@@ -57,7 +57,7 @@ namespace TgStickerMaker
             if (!string.IsNullOrEmpty(topText))
             {
                 var font = GetFontSize(topText, size.Width);
-                textFilter += $"drawtext=fontfile='{fontPath}':text='{topText}':x=(w-text_w)/2:y=10:fontsize={font}:fontcolor=white:borderw=1:bordercolor=black,";
+                textFilter += $"drawtext=fontfile='{fontPath}':text='{topText}':x=(w-text_w)/2:y=3:fontsize={font}:fontcolor=white:borderw=1:bordercolor=black,";
             }
 
             if (!string.IsNullOrEmpty(bottomText))
@@ -122,7 +122,7 @@ namespace TgStickerMaker
                 textFilter = textFilter.Substring(0, textFilter.Length - 1); // Remove trailing comma
             }
 
-            var filterGraph = $"{textFilter},scale=512:512,setsar=1,setpts={speedUpKoaf.ToString().Replace(",", ".")}*PTS";
+            var filterGraph = $"scale=512:512,{textFilter},setsar=1,setpts={speedUpKoaf.ToString().Replace(",", ".")}*PTS";
 
             var process = new Process
             {
@@ -146,7 +146,7 @@ namespace TgStickerMaker
 
         private static int GetFontSize(string text, double videoW)
         {
-            return Convert.ToInt32(videoW / text.Count() * (40d / 18d));
+            return Convert.ToInt32(videoW / text.Count() * (13d / 15d));
         }
 
         public static bool IsImage(string filePath)

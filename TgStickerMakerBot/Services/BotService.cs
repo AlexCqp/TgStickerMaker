@@ -8,17 +8,18 @@ using TgStickerMaker.MediaLoading;
 using TgStickerMaker;
 using static TgStickerMaker.ServiceConfiguration;
 using Telegram.Bot.Types.ReplyMarkups;
+using TgStickerMakerBot.Models;
 
 namespace TgStickerMakerBot.Services
 {
     public class BotService
     {
         private readonly ITelegramBotClient _botClient;
-        private string _currentFilePath;
-        private int _currentStep;
-        private int _videoDuration;
-        private string _topText;
-        private string _bottomText;
+
+        // Словари для хранения состояния каждого пользователя
+        private readonly List<UserState> UserStates = new();
+
+        private readonly UserState _currentUserState;
 
         public BotService(string botToken)
         {
@@ -91,13 +92,20 @@ namespace TgStickerMakerBot.Services
         {
             var text = message.Text;
 
-            switch (_currentStep)
+            if (UserStates.All(x => x.UserId != chatId))
+            {
+                UserStates.Add(new UserState(chatId));
+            }
+
+            var currentStep = GetUserState(chatId).CurrentStep;
+
+            switch (currentStep)
             {
                 case 0:
                     if ((text.Contains("http://") || text.Contains("https://")) && Uri.TryCreate(text, UriKind.Absolute, out _))
                     {
                         await _botClient.SendTextMessageAsync(chatId, "Ссылка определена, идет загрузка файла...", cancellationToken: cancellationToken);
-                        _currentFilePath = await MediaLoader.LoadMediaFrom(text);
+                        GetUserState(chatId).FilePath = await MediaLoader.LoadMediaFrom(text);
                         await SendDurationPrompt(chatId, cancellationToken);
                     }
                     else
@@ -106,33 +114,40 @@ namespace TgStickerMakerBot.Services
                     }
                     break;
                 case 1:
-                    if (int.TryParse(text, out _videoDuration))
+                    if (int.TryParse(text, out var videoDuration))
                     {
-                        await SendTopTextPrompt(chatId, cancellationToken);
+                        GetUserState(chatId).VideoDuration = videoDuration;
                     }
                     else
                     {
-                        _videoDuration = 0;
-                        await SendTopTextPrompt(chatId, cancellationToken);
+                        GetUserState(chatId).VideoDuration = 0;
                     }
+                    await SendTopTextPrompt(chatId, cancellationToken);
                     break;
                 case 2:
-                    _topText = text;
+                    GetUserState(chatId).TopText = text;
                     await SendBottomTextPrompt(chatId, cancellationToken);
                     break;
                 case 3:
-                    _bottomText = text;
-                    await ProcessFile(_currentFilePath, chatId, cancellationToken);
-                    _currentStep = 0;
+                    GetUserState(chatId).BottomText = text;
+                    await ProcessFile(GetUserState(chatId).FilePath, chatId, cancellationToken);
+                    GetUserState(chatId).CurrentStep = 0;
                     break;
             }
         }
 
         private async Task HandleCallbackQueryAsync(CallbackQuery callbackQuery, long chatId, CancellationToken cancellationToken)
         {
+            if (GetUserState(chatId) == null)
+            {
+                UserStates.Add(new UserState(chatId));
+            }
+
+            var currentStep = GetUserState(chatId).CurrentStep;
+
             if (callbackQuery.Data == "skip")
             {
-                switch (_currentStep)
+                switch (currentStep)
                 {
                     case 0:
                         await _botClient.SendTextMessageAsync(chatId, "Отправьте файл или ссылку на файл.", cancellationToken: cancellationToken);
@@ -144,25 +159,25 @@ namespace TgStickerMakerBot.Services
                         await SendBottomTextPrompt(chatId, cancellationToken);
                         break;
                     case 3:
-                        await ProcessFile(_currentFilePath, chatId, cancellationToken);
-                        _currentStep = 0;
+                        await ProcessFile(GetUserState(chatId).FilePath, chatId, cancellationToken);
+                        GetUserState(chatId).CurrentStep = 0;
                         break;
                 }
             }
             else if (callbackQuery.Data == "back")
             {
-                switch (_currentStep)
+                switch (currentStep)
                 {
                     case 1:
-                        _currentStep = 0;
+                        GetUserState(chatId).CurrentStep = 0;
                         await _botClient.SendTextMessageAsync(chatId, "Отправьте файл или ссылку на файл.", cancellationToken: cancellationToken);
                         break;
                     case 2:
-                        _currentStep = 1;
+                        GetUserState(chatId).CurrentStep = 1;
                         await SendDurationPrompt(chatId, cancellationToken);
                         break;
                     case 3:
-                        _currentStep = 2;
+                        GetUserState(chatId).CurrentStep = 2;
                         await SendTopTextPrompt(chatId, cancellationToken);
                         break;
                 }
@@ -188,7 +203,7 @@ namespace TgStickerMakerBot.Services
                 await _botClient.DownloadFileAsync(file.FilePath, saveStream, cancellationToken);
             }
 
-            _currentFilePath = filePath;
+            GetUserState(chatId).FilePath = filePath;
             await SendDurationPrompt(chatId, cancellationToken);
         }
 
@@ -196,46 +211,46 @@ namespace TgStickerMakerBot.Services
         {
             var keyboard = new InlineKeyboardMarkup(new[]
             {
-            new[] { InlineKeyboardButton.WithCallbackData("Создать стикер", "createSticker") }
-        });
+                new[] { InlineKeyboardButton.WithCallbackData("Создать стикер", "createSticker") }
+            });
 
             await _botClient.SendTextMessageAsync(chatId, "Привет! Нажмите кнопку, чтобы начать создание стикера.", replyMarkup: keyboard, cancellationToken: cancellationToken);
         }
 
         private async Task StartStickerCreationAsync(long chatId, CancellationToken cancellationToken)
         {
-            _currentStep = 0; // Начать с нулевого шага
+            GetUserState(chatId).CurrentStep = 0; // Начать с нулевого шага
 
             await _botClient.SendTextMessageAsync(chatId, "Отправьте файл или ссылку на файл.", cancellationToken: cancellationToken);
         }
 
         private async Task SendDurationPrompt(long chatId, CancellationToken cancellationToken)
         {
-            _currentStep = 1;
+            GetUserState(chatId).CurrentStep = 1;
             var keyboard = new InlineKeyboardMarkup(new[]
             {
-            new[] { InlineKeyboardButton.WithCallbackData("Пропустить", "skip") }
-        });
+                new[] { InlineKeyboardButton.WithCallbackData("Пропустить", "skip") }
+            });
             await _botClient.SendTextMessageAsync(chatId, "Введите продолжительность видео (в секундах) или оставьте пустым:", replyMarkup: keyboard, cancellationToken: cancellationToken);
         }
 
         private async Task SendTopTextPrompt(long chatId, CancellationToken cancellationToken)
         {
-            _currentStep = 2;
+            GetUserState(chatId).CurrentStep = 2;
             var keyboard = new InlineKeyboardMarkup(new[]
             {
-            new[] { InlineKeyboardButton.WithCallbackData("Пропустить", "skip") }
-        });
+                new[] { InlineKeyboardButton.WithCallbackData("Пропустить", "skip") }
+            });
             await _botClient.SendTextMessageAsync(chatId, "Введите текст сверху (или оставьте пустым):", replyMarkup: keyboard, cancellationToken: cancellationToken);
         }
 
         private async Task SendBottomTextPrompt(long chatId, CancellationToken cancellationToken)
         {
-            _currentStep = 3;
+            GetUserState(chatId).CurrentStep = 3;
             var keyboard = new InlineKeyboardMarkup(new[]
             {
-            new[] { InlineKeyboardButton.WithCallbackData("Пропустить", "skip") }
-        });
+                new[] { InlineKeyboardButton.WithCallbackData("Пропустить", "skip") }
+            });
             await _botClient.SendTextMessageAsync(chatId, "Введите текст снизу (или оставьте пустым):", replyMarkup: keyboard, cancellationToken: cancellationToken);
         }
 
@@ -265,11 +280,11 @@ namespace TgStickerMakerBot.Services
 
                 if (StickerMaker.IsImage(filePath))
                 {
-                    outputFilePath = await StickerMaker.ProcessImage(filePath, _topText, _bottomText, Settings.BotSettings.OutputDirectory);
+                    outputFilePath = await StickerMaker.ProcessImage(filePath, GetUserState(chatId).TopText, GetUserState(chatId).BottomText, Settings.BotSettings.OutputDirectory);
                 }
                 else
                 {
-                    outputFilePath = await StickerMaker.ProcessVideo(filePath, _topText, _bottomText, _videoDuration, Settings.BotSettings.OutputDirectory);
+                    outputFilePath = await StickerMaker.ProcessVideo(filePath, GetUserState(chatId).TopText, GetUserState(chatId).BottomText, GetUserState(chatId).VideoDuration, Settings.BotSettings.OutputDirectory);
                     // string video2xPath = @"C:\path\to\video2x.exe"; // Укажите путь к экзешнику video2x
                     // upscaledFilePath = await VideoUpscaler.UpscaleVideoAsync(outputFilePath, GetUpscaledFilePath(outputFilePath));
                 }
@@ -308,5 +323,8 @@ namespace TgStickerMakerBot.Services
         {
             return Path.Combine(Path.GetDirectoryName(originalFilePath), Path.GetFileNameWithoutExtension(originalFilePath) + "_upscaled.webm");
         }
+
+        private UserState? GetUserState(long userId)
+            => UserStates.SingleOrDefault(x => x.UserId == userId);
     }
 }
