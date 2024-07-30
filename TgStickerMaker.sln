@@ -7,9 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TgStickerMaker", "TgSticker
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Элементы решения", "Элементы решения", "{8A0CED1B-8A3E-4351-8C9F-8E1B4BD8A532}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TgStickerMakerUi", "TgStickerMakerUi\TgStickerMakerUi.csproj", "{978CB824-3515-4C60-A277-38FCD89F6197}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TgStickerMakerUi", "TgStickerMakerUi\TgStickerMakerUi.csproj", "{978CB824-3515-4C60-A277-38FCD89F6197}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TgStickerMakerBot", "TgStickerMakerBot\TgStickerMakerBot.csproj", "{0AF76E37-CE22-46D8-8372-76498359D484}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TgStickerMakerBot", "TgStickerMakerBot\TgStickerMakerBot.csproj", "{0AF76E37-CE22-46D8-8372-76498359D484}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
