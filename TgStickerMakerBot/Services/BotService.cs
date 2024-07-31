@@ -9,22 +9,28 @@ using TgStickerMaker;
 using static TgStickerMaker.ServiceConfiguration;
 using Telegram.Bot.Types.ReplyMarkups;
 using TgStickerMakerBot.Models;
+using System.Windows.Input;
+using TgStickerMakerBot.Services.Factories;
+using TgStickerMakerBot.Comands;
+using Newtonsoft.Json;
+using TgStickerMakerBot.Models.CallbackModels;
 
 namespace TgStickerMakerBot.Services
 {
     public class BotService
     {
         private readonly ITelegramBotClient _botClient;
+        private readonly IServiceProvider _serviceProvider;
 
+        public BotService(ITelegramBotClient botCLient, IServiceProvider sesrviceProvider)
+        {
+            _botClient = botCLient;
+            _serviceProvider = sesrviceProvider;
+        }
         // Словари для хранения состояния каждого пользователя
         private readonly List<UserState> UserStates = new();
 
         private readonly UserState _currentUserState;
-
-        public BotService(string botToken)
-        {
-            _botClient = new TelegramBotClient(botToken);
-        }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
@@ -49,42 +55,64 @@ namespace TgStickerMakerBot.Services
 
         private async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
-            if (update.Message is { } message)
+            try
             {
-                var chatId = message.Chat.Id;
+                if (update.Message is { } message)
+                {
+                    var chatId = message.Chat.Id;
 
-                try
-                {
-                    if (message.Type == MessageType.Text)
+                    if (GetUserState(chatId) == null)
                     {
-                        await HandleTextMessageAsync(message, chatId, cancellationToken);
+                        UserStates.Add(new UserState(chatId));
                     }
-                    else if (message.Document is not null || message.Photo is not null || message.Video is not null)
+
+                    if (message.Text.Split(' ')[0] == "/start")
                     {
-                        await HandleMediaMessageAsync(message, chatId, cancellationToken);
+                        await SendWelcomeMessageAsync(message.Chat.Id, cancellationToken);
+
+                        return;
+                    }
+
+                    var command = CommandCreatorFactory.GetCommand(GetUserState(chatId).CurrentCommandClass, _serviceProvider);
+                    try
+                    {
+                        if (message.Type == MessageType.Text)
+                        {
+                            await command.DoWorkAsync(chatId, message.Text, GetUserState(chatId), cancellationToken);
+                        }
+                        else if (message.Document is not null || message.Photo is not null || message.Video is not null)
+                        {
+                            await HandleMediaMessageAsync(message, chatId, cancellationToken);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        await _botClient.SendTextMessageAsync(chatId, "Ошибка", cancellationToken: cancellationToken);
                     }
                 }
-                catch (Exception ex)
+                else if (update.CallbackQuery is { } callbackQuery)
                 {
-                    await _botClient.SendTextMessageAsync(chatId, "Ошибка", cancellationToken: cancellationToken);
+                    var chatId = callbackQuery.Message.Chat.Id;
+                    var callback = JsonConvert.DeserializeObject<CommandCallbackModel>(callbackQuery.Data);
+                    GetUserState(chatId).CurrentCommandClass = callback.CommandClass;
+                    var command = CommandCreatorFactory.GetCommand(GetUserState(chatId).CurrentCommandClass, _serviceProvider);
+                    await command.HandleCallbackQueryAsync(callbackQuery, chatId, cancellationToken, GetUserState(chatId));
+                }
+                else if (update.Message is { } commandMessage && commandMessage.Type == MessageType.Text)
+                {
+                    var command = commandMessage.Text.Split(' ')[0];
+                    if (command == "/start")
+                    {
+                        await SendWelcomeMessageAsync(commandMessage.Chat.Id, cancellationToken);
+                    }
+                    else if (command == "/createSticker")
+                    {
+                        await StartStickerCreationAsync(commandMessage.Chat.Id, cancellationToken);
+                    }
                 }
             }
-            else if (update.CallbackQuery is { } callbackQuery)
+            catch
             {
-                var chatId = callbackQuery.Message.Chat.Id;
-                await HandleCallbackQueryAsync(callbackQuery, chatId, cancellationToken);
-            }
-            else if (update.Message is { } commandMessage && commandMessage.Type == MessageType.Text)
-            {
-                var command = commandMessage.Text.Split(' ')[0];
-                if (command == "/start")
-                {
-                    await SendWelcomeMessageAsync(commandMessage.Chat.Id, cancellationToken);
-                }
-                else if (command == "/createSticker")
-                {
-                    await StartStickerCreationAsync(commandMessage.Chat.Id, cancellationToken);
-                }
             }
         }
 
@@ -214,7 +242,7 @@ namespace TgStickerMakerBot.Services
                 new[] { InlineKeyboardButton.WithCallbackData("Создать стикер", "createSticker") }
             });
 
-            await _botClient.SendTextMessageAsync(chatId, "Привет! Нажмите кнопку, чтобы начать создание стикера.", replyMarkup: keyboard, cancellationToken: cancellationToken);
+            await _botClient.SendTextMessageAsync(chatId, "Привет! Нажмите кнопку, чтобы начать создание стикера.", replyMarkup: Buttons.Buttons.MainMenu, cancellationToken: cancellationToken);
         }
 
         private async Task StartStickerCreationAsync(long chatId, CancellationToken cancellationToken)

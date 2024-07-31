@@ -4,8 +4,6 @@ using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Diagnostics;
-using System.Dynamic;
-using System.ServiceProcess;
 using System.Text.RegularExpressions;
 using TgStickerMaker.Helpers;
 using Xabe.FFmpeg;
@@ -17,6 +15,23 @@ namespace TgStickerMaker
         const double DefaultDuration = 3;
         const double DefaultTextSize = 100;
         const double Default40FontSizeWidthInPixel = 23;
+
+        public static async Task<string> ProcessFileAsync(string filePath, double duration, string topText, string bottomText, string outputDirectory)
+        {
+            if (!Directory.Exists(ServiceConfiguration.Settings.OutputDirectory))
+            {
+                Directory.CreateDirectory(ServiceConfiguration.Settings.OutputDirectory);
+            }
+
+            if (StickerMaker.IsImage(filePath))
+            {
+                return await StickerMaker.ProcessImage(filePath, topText, bottomText, outputDirectory);
+            }
+            else
+            {
+                return await StickerMaker.ProcessVideo(filePath, topText, bottomText, duration,  outputDirectory);
+            }
+        }
 
         public static async Task<string> ProcessImage(string filePath, string topText, string bottomText, string outputDirectory)
         {

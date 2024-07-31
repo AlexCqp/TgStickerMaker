@@ -4,6 +4,7 @@ using System.Dynamic;
 using System.Reflection;
 using TgStickerMaker.Settings;
 using Microsoft.Extensions.Configuration;
+using Telegram.Bot;
 
 namespace TgStickerMaker
 {
@@ -19,7 +20,7 @@ namespace TgStickerMaker
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddEnvironmentVariables()  // Переменные среды добавляются после файла конфигурации
+                .AddEnvironmentVariables()
                 .Build();
 
             Settings = configuration.GetSection("AppSettings").Get<AppSettings>();

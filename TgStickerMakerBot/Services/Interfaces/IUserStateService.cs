@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TgStickerMakerBot.Models;
 
 namespace TgStickerMakerBot.Services.Interfaces
 {
-    internal interface IStickerPacksManager
+    public interface IStickerPacksManager
     {
-        public void CreateStickerPack(long userId);
+        public Task CreateStickerPackAsync(AddStickerModel addStickerModel, Stream sticker);
 
-        public void AddSticker(long userId);
+        public Task AddStickerToStickerPack(AddStickerModel stickerInfo, Stream sticker);
     }
 }

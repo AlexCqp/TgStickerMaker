@@ -1,30 +1,34 @@
-﻿using static TgStickerMaker.ServiceConfiguration;
-using TgStickerMakerBot.Services;
+﻿using TgStickerMakerBot.Services;
+using System.ComponentModel.Design;
+using TgStickerMakerBot;
+using Microsoft.Extensions.DependencyInjection;
 
-ConfigureServices();
 await Main();
 
 async Task Main()
 {
     try
     {
-        ConfigureServices();
-        Console.Write($"ssSSdefkewjgklwe {Settings.BotSettings.BotToken}");
-        var botService = new BotService(Settings.BotSettings.BotToken);
+        ServiceConfiguration.ConfigureServices();
+        var settings = TgStickerMaker.ServiceConfiguration.Settings;
+        Console.WriteLine($"Bot Token: {settings.BotSettings.BotToken}");
+
+        // Получаем BotService через DI
+        var botService = ServiceConfiguration.ServiceProvider.GetRequiredService<BotService>();
 
         var cts = new CancellationTokenSource();
 
-        // Setup a task to listen for termination signals (e.g., SIGTERM)
+        // Настраиваем обработчики сигналов завершения
         AppDomain.CurrentDomain.ProcessExit += (s, e) => cts.Cancel();
         Console.CancelKeyPress += (s, e) =>
         {
-            e.Cancel = true; // Prevent the process from terminating.
+            e.Cancel = true; // Предотвращаем завершение процесса
             cts.Cancel();
         };
 
         await botService.StartAsync(cts.Token);
 
-        // Wait until the cancellation token is triggered
+        // Ожидаем до срабатывания токена отмены
         await Task.Delay(Timeout.Infinite, cts.Token);
     }
     catch (Exception ex)

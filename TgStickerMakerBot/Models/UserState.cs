@@ -1,4 +1,6 @@
-﻿namespace TgStickerMakerBot.Models
+﻿using TgStickerMakerBot.Comands;
+
+namespace TgStickerMakerBot.Models
 {
     public class UserState
     {
@@ -18,5 +20,7 @@
         public string TopText { get; set; }
 
         public string BottomText { get; set; }
+
+        public CommandClass CurrentCommandClass { get; set; }
     }
 }
