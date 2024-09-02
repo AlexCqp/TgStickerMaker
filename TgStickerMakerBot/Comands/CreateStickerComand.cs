@@ -28,22 +28,23 @@ namespace TgStickerMakerBot.Comands
             await _botClient.SendTextMessageAsync(userState.UserId, "Отправьте файл или ссылку на файл (например, https://tenor.com/ru/view/sus-suspicious-gif-23068645).", cancellationToken: cancellationToken);
         }
 
-        public async Task HandleTextMessageAsync(string messageText, UserState userState, CancellationToken cancellationToken)
+        public async Task HandleTextMessageAsync(Message message, UserState userState, CancellationToken cancellationToken)
         {
+            var messageText = message.Text;
             switch ((CreateStickerSteps)userState.CurrentStep)
             {
                 case CreateStickerSteps.LoadMedia:
                     {
-                        if ((IsLink(messageText)) && Uri.TryCreate(messageText, UriKind.Absolute, out _))
+                        if (!string.IsNullOrEmpty(messageText) && (IsLink(messageText)) && Uri.TryCreate(messageText, UriKind.Absolute, out _))
                         {
                             await _botClient.SendTextMessageAsync(userState.UserId, "Ссылка определена, идет загрузка файла...", cancellationToken: cancellationToken);
-                            userState.FilePath = await MediaLoader.LoadMediaFrom(messageText, userState.UserId.ToString());
+                            userState.FilePath = await MediaLoader.LoadMediaFrom(messageText);
                             userState.CurrentStep++;
                             await SendTextPromptWithSkipBackAsync(userState.UserId, "Введите продолжительность видео (в секундах) или оставьте пустым", CreateStickerSteps.SetDuration, null, cancellationToken);
                         }
                         else
                         {
-
+                            Test(message, userState, cancellationToken);
                         }
 
                         break;
@@ -172,18 +173,18 @@ namespace TgStickerMakerBot.Comands
             return messageText.Contains("http://") || messageText.Contains("https://");
         }
 
-        //private void Test(Message message, UserState userState)
-        //{
-        //    if (message.Type == MessageType.Text)
-        //    {
-        //        await command.HandleTextMessageAsync(message.Text, userState, cancellationToken);
-        //    }
-        //    else if (message.Document is not null || message.Photo is not null || message.Video is not null)
-        //    {
-        //        await HandleMediaMessageAsync(message, userState.UserId, cancellationToken);
-        //    }
-        //}
-        private async Task HandleMediaMessageAsync(Message message, long chatId, CancellationToken cancellationToken)
+        private async void Test(Message message, UserState userState, CancellationToken cancellationToken)
+        {
+            if (message.Type == MessageType.Text)
+            {
+                await HandleTextMessageAsync(message, userState, cancellationToken);
+            }
+            else if (message.Document is not null || message.Photo is not null || message.Video is not null)
+            {
+                await HandleMediaMessageAsync(message, userState.UserId, userState, cancellationToken);
+            }
+        }
+        private async Task HandleMediaMessageAsync(Message message, long chatId, UserState userState, CancellationToken cancellationToken)
         {
             var fileId = message.Type switch
             {
@@ -203,7 +204,7 @@ namespace TgStickerMakerBot.Comands
             }
 
             userState.FilePath = filePath;
-            await SendDurationPrompt(chatId, cancellationToken);
+            await SendTextPromptWithSkipBackAsync(userState.UserId, "Введите продолжительность видео (в секундах) или оставьте пустым", CreateStickerSteps.SetDuration, null, cancellationToken);
         }
     }
 }

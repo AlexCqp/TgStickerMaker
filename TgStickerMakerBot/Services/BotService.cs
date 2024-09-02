@@ -100,7 +100,7 @@ namespace TgStickerMakerBot.Services
                     return;
                 }
 
-                await command.HandleTextMessageAsync(message.Text, userState, cancellationToken);
+                await command.HandleTextMessageAsync(message, userState, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -148,7 +148,7 @@ namespace TgStickerMakerBot.Services
                     {
                         if (message.Type == MessageType.Text)
                         {
-                            await command.HandleTextMessageAsync(message.Text, GetUserState(chatId), cancellationToken);
+                            await command.HandleTextMessageAsync(message, GetUserState(chatId), cancellationToken);
                         }
                         else if (message.Document is not null || message.Photo is not null || message.Video is not null)
                         {
