@@ -8,6 +8,6 @@ namespace TgStickerMaker.MediaLoading
 {
     public interface IMediaLoaderService
     {
-        public Task<string> LoadMediaAsync(string url);
+        public Task<string> LoadMediaAsync(string url, string filename = null);
     }
 }

@@ -10,19 +10,18 @@ namespace TgStickerMaker.MediaLoading
     {
         private const string TenorDomain = "tenor.com";
 
-        public static async Task<string> LoadMediaFrom(string url)
+        public static async Task<string> LoadMediaFrom(string url, string filename = null)
         {
             var isCorrectUrl = Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out var uri);
             if (string.IsNullOrEmpty(url) || !isCorrectUrl)
             {
-                Console.WriteLine("Че за хуйню ты ввел, олух");
                 return null;
             }
 
             var siteType = DefineSiteType(uri);
             var mediaLoaderService = MediaLoaderFactory.CreateMediaLoader(siteType);
 
-            return await mediaLoaderService.LoadMediaAsync(url);
+            return await mediaLoaderService.LoadMediaAsync(url, filename);
         }
 
         private static SiteType DefineSiteType(Uri uri)
