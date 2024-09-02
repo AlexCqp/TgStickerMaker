@@ -29,7 +29,7 @@ namespace TgStickerMakerBot.Buttons
             return new InlineKeyboardMarkup(new[]
             {
                 InlineKeyboardButton.WithCallbackData("Пропустить", skipCommandJsonCallback),
-                InlineKeyboardButton.WithCallbackData("Назад",  backCommandJsonCallback)
+                //InlineKeyboardButton.WithCallbackData("Назад",  backCommandJsonCallback)
             });
         }
     }

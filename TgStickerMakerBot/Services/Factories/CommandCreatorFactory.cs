@@ -9,19 +9,11 @@ namespace TgStickerMakerBot.Services.Factories
         {
             switch (commandClass)
             {
-                case CommandClass.None:
-                    break;
                 case CommandClass.CreateSticker:
                     return _serviceProvider.GetService<CreateStickerComand>();
-                case CommandClass.CreateAndAddStickerToSet:
-                    break;
-                case CommandClass.CreateStickerSet:
-                    break;
                 default:
-                    break;
+                    return null;
             }
-
-            throw new NotImplementedException();
         }
     }
 }

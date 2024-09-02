@@ -11,8 +11,12 @@ namespace TgStickerMakerBot.Comands
 {
     public interface IBotCommand
     {
-        public Task DoWorkAsync(long userId, string messageText, UserState userState, CancellationToken cancellationToken);
+        public Task HandleTextMessageAsync(string messageText, UserState userState, CancellationToken cancellationToken);
 
         public Task HandleCallbackQueryAsync(CallbackQuery callbackQuery, long userId, CancellationToken cancellationToken, UserState userState);
+
+        Task StartAsync(UserState userState, CancellationToken cancellationToken);
+
+        //public string GetCurrentCommandStep();
     }
 }

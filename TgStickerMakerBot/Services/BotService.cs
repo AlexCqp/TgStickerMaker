@@ -4,12 +4,10 @@ using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types;
 using Telegram.Bot;
 using TgStickerMaker.Logger;
-using TgStickerMaker.MediaLoading;
 using TgStickerMaker;
 using static TgStickerMaker.ServiceConfiguration;
 using Telegram.Bot.Types.ReplyMarkups;
 using TgStickerMakerBot.Models;
-using System.Windows.Input;
 using TgStickerMakerBot.Services.Factories;
 using TgStickerMakerBot.Comands;
 using Newtonsoft.Json;
@@ -36,6 +34,7 @@ namespace TgStickerMakerBot.Services
         {
             var me = await _botClient.GetMeAsync();
             Console.WriteLine($"Бот {me.FirstName} запущен. Нажмите Ctrl+C для завершения работы");
+            //await _botClient.SetMyCommandsAsync(CommandHelper.GetAllCommandsTextAndDescription(), BotCommandScopeChat.Default(), cancellationToken: cancellationToken);
 
             _botClient.StartReceiving(
                 updateHandler: HandleUpdateAsync,
@@ -59,6 +58,77 @@ namespace TgStickerMakerBot.Services
             {
                 if (update.Message is { } message)
                 {
+                    var userId = message.Chat.Id;
+                    var currentUserState = InitUserStateAndGetUserState(userId);
+                    await HandleTextMessageAsync(currentUserState, update.Message, cancellationToken);
+                }
+                else if (update.CallbackQuery is { } callBack)
+                {
+                    var chatId = callBack.Message.Chat.Id;
+                    var currentUserState = InitUserStateAndGetUserState(chatId);
+                    var callback = JsonConvert.DeserializeObject<CommandCallbackModel>(callBack.Data);
+                    currentUserState.CurrentCommandClass = callback.CommandClass;
+                    var command = CommandCreatorFactory.GetCommand(currentUserState.CurrentCommandClass, _serviceProvider);
+                    await command.HandleCallbackQueryAsync(callBack, chatId, cancellationToken, currentUserState);
+                    await _botClient.AnswerCallbackQueryAsync(callBack.Id, cancellationToken: cancellationToken);
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        private UserState InitUserStateAndGetUserState(long userId)
+        {
+            if (!UserStates.Any(x => x.UserId == userId))
+            {
+                UserStates.Add(new UserState(userId));
+            }
+
+            return UserStates.SingleOrDefault(x => x.UserId == userId);
+        }
+
+        private async Task HandleTextMessageAsync(UserState userState, Message message, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var command = CommandCreatorFactory.GetCommand(GetUserState(userState.UserId).CurrentCommandClass, _serviceProvider);
+                if (command == null)
+                {
+                    await HandleNonCommandText(userState, command, message, cancellationToken);
+                    return;
+                }
+
+                await command.HandleTextMessageAsync(message.Text, userState, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        private async Task HandleNonCommandText(UserState userState, IBotCommand botCommand, Message message, CancellationToken cancellationToken)
+        {
+            if (message.Text?.Split(' ')[0] == "/start")
+            {
+                await SendWelcomeMessageAsync(message.Chat.Id, cancellationToken);
+                return;
+            }
+            else if (message.Text == "/createsticker")
+            {
+                botCommand = CommandCreatorFactory.GetCommand(CommandClass.CreateSticker, _serviceProvider);
+                await botCommand.StartAsync(userState, cancellationToken);
+            }
+            //await _botClient.SendTextMessageAsync(userState.UserId, botCommand.GetCurrentCommandStep());
+        }
+
+        private async Task T(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (update.Message is { } message)
+                {
                     var chatId = message.Chat.Id;
 
                     if (GetUserState(chatId) == null)
@@ -66,7 +136,7 @@ namespace TgStickerMakerBot.Services
                         UserStates.Add(new UserState(chatId));
                     }
 
-                    if (message.Text.Split(' ')[0] == "/start")
+                    if (message.Text?.Split(' ')[0] == "/start")
                     {
                         await SendWelcomeMessageAsync(message.Chat.Id, cancellationToken);
 
@@ -78,7 +148,7 @@ namespace TgStickerMakerBot.Services
                     {
                         if (message.Type == MessageType.Text)
                         {
-                            await command.DoWorkAsync(chatId, message.Text, GetUserState(chatId), cancellationToken);
+                            await command.HandleTextMessageAsync(message.Text, GetUserState(chatId), cancellationToken);
                         }
                         else if (message.Document is not null || message.Photo is not null || message.Video is not null)
                         {
@@ -105,7 +175,7 @@ namespace TgStickerMakerBot.Services
                     {
                         await SendWelcomeMessageAsync(commandMessage.Chat.Id, cancellationToken);
                     }
-                    else if (command == "/createSticker")
+                    else if (command == "/createsticker")
                     {
                         await StartStickerCreationAsync(commandMessage.Chat.Id, cancellationToken);
                     }
@@ -116,53 +186,53 @@ namespace TgStickerMakerBot.Services
             }
         }
 
-        private async Task HandleTextMessageAsync(Message message, long chatId, CancellationToken cancellationToken)
-        {
-            var text = message.Text;
+        //private async Task HandleTextMessageAsync(Message message, long chatId, CancellationToken cancellationToken)
+        //{
+        //    var text = message.Text;
 
-            if (UserStates.All(x => x.UserId != chatId))
-            {
-                UserStates.Add(new UserState(chatId));
-            }
+        //    if (UserStates.All(x => x.UserId != chatId))
+        //    {
+        //        UserStates.Add(new UserState(chatId));
+        //    }
 
-            var currentStep = GetUserState(chatId).CurrentStep;
+        //    var currentStep = GetUserState(chatId).CurrentStep;
 
-            switch (currentStep)
-            {
-                case 0:
-                    if ((text.Contains("http://") || text.Contains("https://")) && Uri.TryCreate(text, UriKind.Absolute, out _))
-                    {
-                        await _botClient.SendTextMessageAsync(chatId, "Ссылка определена, идет загрузка файла...", cancellationToken: cancellationToken);
-                        GetUserState(chatId).FilePath = await MediaLoader.LoadMediaFrom(text);
-                        await SendDurationPrompt(chatId, cancellationToken);
-                    }
-                    else
-                    {
-                        await _botClient.SendTextMessageAsync(chatId, "Отправьте файл или ссылку на файл.", cancellationToken: cancellationToken);
-                    }
-                    break;
-                case 1:
-                    if (int.TryParse(text, out var videoDuration))
-                    {
-                        GetUserState(chatId).VideoDuration = videoDuration;
-                    }
-                    else
-                    {
-                        GetUserState(chatId).VideoDuration = 0;
-                    }
-                    await SendTopTextPrompt(chatId, cancellationToken);
-                    break;
-                case 2:
-                    GetUserState(chatId).TopText = text;
-                    await SendBottomTextPrompt(chatId, cancellationToken);
-                    break;
-                case 3:
-                    GetUserState(chatId).BottomText = text;
-                    await ProcessFile(GetUserState(chatId).FilePath, chatId, cancellationToken);
-                    GetUserState(chatId).CurrentStep = 0;
-                    break;
-            }
-        }
+        //    switch (currentStep)
+        //    {
+        //        case 0:
+        //            if ((text.Contains("http://") || text.Contains("https://")) && Uri.TryCreate(text, UriKind.Absolute, out _))
+        //            {
+        //                await _botClient.SendTextMessageAsync(chatId, "Ссылка определена, идет загрузка файла...", cancellationToken: cancellationToken);
+        //                GetUserState(chatId).FilePath = await MediaLoader.LoadMediaFrom(text);
+        //                await SendDurationPrompt(chatId, cancellationToken);
+        //            }
+        //            else
+        //            {
+        //                await _botClient.SendTextMessageAsync(chatId, "Отправьте файл или ссылку на файл.", cancellationToken: cancellationToken);
+        //            }
+        //            break;
+        //        case 1:
+        //            if (int.TryParse(text, out var videoDuration))
+        //            {
+        //                GetUserState(chatId).VideoDuration = videoDuration;
+        //            }
+        //            else
+        //            {
+        //                GetUserState(chatId).VideoDuration = 0;
+        //            }
+        //            await SendTopTextPrompt(chatId, cancellationToken);
+        //            break;
+        //        case 2:
+        //            GetUserState(chatId).TopText = text;
+        //            await SendBottomTextPrompt(chatId, cancellationToken);
+        //            break;
+        //        case 3:
+        //            GetUserState(chatId).BottomText = text;
+        //            await ProcessFile(GetUserState(chatId).FilePath, chatId, cancellationToken);
+        //            GetUserState(chatId).CurrentStep = 0;
+        //            break;
+        //    }
+        //}
 
         private async Task HandleCallbackQueryAsync(CallbackQuery callbackQuery, long chatId, CancellationToken cancellationToken)
         {
@@ -220,6 +290,7 @@ namespace TgStickerMakerBot.Services
                 MessageType.Document => message.Document.FileId,
                 MessageType.Photo => message.Photo[^1].FileId, // Берем последнюю, т.е. самую высокую по качеству
                 MessageType.Video => message.Video.FileId,
+                MessageType.Animation => message.Animation.FileId,
                 _ => throw new ArgumentOutOfRangeException("неверный тип файла")
             };
 

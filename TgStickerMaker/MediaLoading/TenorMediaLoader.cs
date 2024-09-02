@@ -11,7 +11,7 @@ namespace TgStickerMaker.MediaLoading
 {
     public class TenorMediaLoader : IMediaLoaderService
     {
-        public async Task<string> LoadMediaAsync(string url)
+        public async Task<string> LoadMediaAsync(string url, string filename = null)
         {
             using (HttpClient client = new HttpClient())
             {
@@ -45,11 +45,11 @@ namespace TgStickerMaker.MediaLoading
                                 var gifFilePath = ServiceConfiguration.Settings.MediaDownloadDirectory;
                                 if(!Uri.TryCreate(gifUrl, UriKind.RelativeOrAbsolute, out var res))
                                 {
-                                    gifFilePath = WriteFilesHelper.GetUniqueFileName(Path.Combine(gifFilePath, "input.gif"));
+                                    gifFilePath = WriteFilesHelper.GetUniqueFileName(Path.Combine(gifFilePath, $"{filename}_input.gif"));
                                 }
                                 else
                                 {
-                                    gifFilePath = WriteFilesHelper.GetUniqueFileName(Path.Combine(gifFilePath, res.Segments.Last()));
+                                    gifFilePath = WriteFilesHelper.GetUniqueFileName(Path.Combine(gifFilePath, filename + "_" + res.Segments.Last()));
                                 }
 
                                 byte[] gifBytes = await client.GetByteArrayAsync(gifUri);

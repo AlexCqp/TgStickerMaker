@@ -1,10 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Dynamic;
 using System.Reflection;
 using TgStickerMaker.Settings;
-using Microsoft.Extensions.Configuration;
-using Telegram.Bot;
 
 namespace TgStickerMaker
 {

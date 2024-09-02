@@ -15,7 +15,10 @@ namespace TgStickerMaker
         const double DefaultDuration = 3;
         const double DefaultTextSize = 100;
         const double Default40FontSizeWidthInPixel = 23;
+        const double DefaultVideoHeight = 512;
+        const double DefaultVideoWidth = 512;
 
+        private static readonly Process _process;
         public static async Task<string> ProcessFileAsync(string filePath, double duration, string topText, string bottomText, string outputDirectory)
         {
             if (!Directory.Exists(ServiceConfiguration.Settings.OutputDirectory))
@@ -25,11 +28,11 @@ namespace TgStickerMaker
 
             if (StickerMaker.IsImage(filePath))
             {
-                return await StickerMaker.ProcessImage(filePath, topText, bottomText, outputDirectory);
+                return await ProcessImage(filePath, topText, bottomText, outputDirectory);
             }
             else
             {
-                return await StickerMaker.ProcessVideo(filePath, topText, bottomText, duration,  outputDirectory);
+                return await ProcessVideo(filePath, topText, bottomText, duration,  outputDirectory);
             }
         }
 
@@ -52,8 +55,7 @@ namespace TgStickerMaker
         {
             string videoInfo = GetVideoInfo(filePath);
             var sourceVideoDuration = GetVideoDuration(videoInfo);
-            var size = ExtractVideoDimensions(videoInfo);
-            Console.WriteLine(sourceVideoDuration);
+
             var speedUpKoaf = duration == 0 && sourceVideoDuration > 3 ? (DefaultDuration - 0.5) / sourceVideoDuration : 1;
             duration = duration == 0 ? DefaultDuration : duration;
             var videosPath = Path.Combine(outputDirectory, "videos");
@@ -62,49 +64,63 @@ namespace TgStickerMaker
                 Directory.CreateDirectory(videosPath);
             }
 
-            Console.WriteLine(Path.Combine(AppContext.BaseDirectory, ServiceConfiguration.Settings.FFmpegPath));
-            var outputFilePath = WriteFilesHelper.GetUniqueFileName(Path.Combine(videosPath, "output.webm"));
-            Console.WriteLine(ServiceConfiguration.Settings.PathToFont);
+            var scaledVideoOutputFile = WriteFilesHelper.GetUniqueFileName(Path.Combine(videosPath, $"output_scaled_step_1_{Path.GetFileName(filePath)}"));
+            await ChangeVideoScale(filePath, scaledVideoOutputFile);
+            
             string fontPath = ServiceConfiguration.Settings.PathToFont;
-             /*Convert.ToInt32(Convert.ToDouble((Math.Sqrt((size.Width * size.Width + size.Height * size.Height))) / 2203 * 100));*/
             var textFilter = "";
 
             if (!string.IsNullOrEmpty(topText))
             {
-                var font = GetFontSize(topText, size.Width);
-                textFilter += $"drawtext=fontfile='{fontPath}':text='{topText}':x=(w-text_w)/2:y=3:fontsize={font}:fontcolor=white:borderw=1:bordercolor=black,";
+                var font = GetFontSize(topText, DefaultVideoWidth);
+                textFilter += $"drawtext=fontfile='{fontPath}':text='{topText}':x=(w-text_w)/2:y=10:fontsize={font}:fontcolor=white:borderw=1:bordercolor=black,";
             }
 
             if (!string.IsNullOrEmpty(bottomText))
             {
-                var font = GetFontSize(bottomText, size.Width);
+                var font = GetFontSize(bottomText, DefaultVideoWidth);
                 textFilter += $"drawtext=fontfile='{fontPath}':text='{bottomText}':x=(w-text_w)/2:y=h-text_h-10:fontsize={font}:fontcolor=white:borderw=1:bordercolor=black,";
             }
 
-            if (textFilter.EndsWith(","))
+            var outputFilePath = WriteFilesHelper.GetUniqueFileName(Path.Combine(videosPath, $"{Path.GetFileName(filePath)}_output.webm"));
+            var filterGraph = $"{textFilter}setsar=1,setpts={speedUpKoaf.ToString().Replace(",", ".")}*PTS";
+            using (var process = InitProcess(scaledVideoOutputFile, filterGraph,  $"-vcodec libvpx-vp9 -b:v 250k -r 30 {(speedUpKoaf != 1 ? "" : $"-t {duration}")}", outputFilePath))
             {
-                textFilter = textFilter.Substring(0, textFilter.Length - 1); // Убираем последнюю запятую
+                process.Start();
+                string output = process.StandardError.ReadToEnd();
+                await process.WaitForExitAsync();
             }
 
-            var filterGraph = $"{textFilter},scale=512:512,setsar=1,setpts={speedUpKoaf.ToString().Replace(",", ".")}*PTS";
+            return outputFilePath;
+        }
+
+        private static async Task ChangeVideoScale(string filePath, string outputFilePath, string resolution = "512x512")
+        {
+            string filterGraph = $"scale={resolution}";
+
+            using (var process = InitProcess(filePath, filterGraph, " -b:v 250k -r 30", outputFilePath))
+            {
+                process.Start();
+                string output = process.StandardError.ReadToEnd();
+                await process.WaitForExitAsync();
+            }
+        }
+
+        private static Process InitProcess(string filePath, string filterGraph, string filters, string outputFilePath)
+        {
             var process = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = ServiceConfiguration.Settings.FFmpegPath,
-                    Arguments = $"-i \"{filePath}\" -vf \"{filterGraph}\" -vcodec libvpx-vp9 -b:v 250k -r 30 {(speedUpKoaf != 1 ? "" : $"-t {duration}")} \"{outputFilePath}\"",
+                    Arguments = $"-i \"{filePath}\" -vf \"{filterGraph}\" {filters} \"{outputFilePath}\"",
                     RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = true
                 }
             };
 
-            process.Start();
-            string output = process.StandardError.ReadToEnd();
-            await process.WaitForExitAsync();
-            Console.WriteLine($"{output}");
-
-            return outputFilePath;
+            return process;
         }
 
         public static async Task<string> ProcessVideo(string filePath, TextOverlay[] textOverlays, double duration)
@@ -161,7 +177,8 @@ namespace TgStickerMaker
 
         private static int GetFontSize(string text, double videoW)
         {
-            return Convert.ToInt32(videoW / text.Count() * (13d / 15d));
+            var fontSize = Convert.ToInt32(videoW / text.Count() * (37d / 23d));
+            return fontSize > 60 ? 60 : fontSize;
         }
 
         public static bool IsImage(string filePath)
